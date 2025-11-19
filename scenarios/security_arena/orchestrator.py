@@ -520,6 +520,8 @@ Perform your task now. Output in the specified format."""
         filename_suffix: str = "result"
     ) -> None:
         """Save arena results to disk"""
+        import json
+
         results_dir_env = os.getenv("AGENTBEATS_RESULTS_DIR")
         if results_dir_env:
             results_dir = Path(results_dir_env)
@@ -536,6 +538,31 @@ Perform your task now. Output in the specified format."""
             f.write(arena_result.model_dump_json(indent=2))
 
         logger.info(f"Results saved to: {result_path}")
+
+        # Generate baseline_passed.json
+        baseline_path = results_dir / "baseline_passed.json"
+        baseline_data = {
+            "passed": arena_result.baseline_passed,
+            "baseline_value": arena_result.baseline_value,
+            "scenario_type": arena_result.scenario_type
+        }
+        with open(baseline_path, 'w') as f:
+            json.dump(baseline_data, f, indent=2)
+
+        # Generate attack_succeeded.json
+        attack_path = results_dir / "attack_succeeded.json"
+        attack_succeeded = arena_result.winner == "attacker"
+        attack_data = {
+            "succeeded": attack_succeeded,
+            "manipulation_round": arena_result.manipulation_round,
+            "rounds_defended": arena_result.rounds_defended,
+            "total_rounds": arena_result.total_rounds,
+            "scenario_type": arena_result.scenario_type
+        }
+        with open(attack_path, 'w') as f:
+            json.dump(attack_data, f, indent=2)
+
+        logger.info(f"Evidence files saved to: {results_dir}")
 
         await updater.update_status(
             TaskState.working,

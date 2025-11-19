@@ -407,13 +407,13 @@ A: Yes! Submit each scenario separately. More scenarios = more points.
 A: The `arena_result.json` will show `"winner": "attacker"` if attack succeeded in any round.
 
 **Q: What model do baseline agents use?**
-A: Baseline agents use `gpt-4o-mini`. Your plugin should be model-agnostic.
+A: All agents (including baseline) must use `gpt-oss-20b` for the competition. Your plugin should be model-agnostic.
 
 ---
 
 ## Resources
 
+- Main documentation: `scenarios/security_arena/README.md`
 - Plugin base class: `scenarios/security_arena/plugins/base.py`
 - Example plugins: `scenarios/security_arena/plugins/`
 - Configuration examples: `scenarios/security_arena/scenario_*.toml`
-- Competition guide: `scenarios/security_arena/COMPETITION_GUIDE.md`
