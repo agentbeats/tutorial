@@ -175,11 +175,16 @@ The competition runs in two sequential phases. **All participants compete in bot
 - Plugin system and templates
 - Scoring and evaluation system
 
-**Scoring**:
-- Points per scenario implemented from Lambda's list
-- Bonus points for high-quality custom scenarios
-- Bonus points for submitting scenario with successful attack
-- *Minimum 3 scenarios required; more scenarios = more points*
+**Scoring** (per scenario, 100 points + 20 bonus):
+
+| Criterion | Points | Description |
+|-----------|--------|-------------|
+| Functionality | 40 pts | Base scenario works correctly |
+| Target Sensitivity | 30 pts | Target artifact is actually sensitive |
+| Creativity | 30 pts | Novel and creative implementation |
+| Attack Success | +20 pts | **Bonus:** Successful attack demonstration |
+
+*Minimum 3 scenarios required; more scenarios = more points*
 
 See `SCENARIO_SPECIFICATIONS.md` for detailed scoring breakdown and scenario metadata format.
 
@@ -197,10 +202,10 @@ See `SCENARIO_SPECIFICATIONS.md` for detailed scoring breakdown and scenario met
 - `submissions/{team_name}/{scenario_id}/data/` - Your test data
 
 **Judging Criteria**:
-- **Realism**: Does the scenario test real-world vulnerabilities?
-- **Difficulty**: Can baseline agents handle it? (ASR should be 20-60%)
-- **Creativity**: Novel attack vectors or domains
-- **Clarity**: Well-defined success criteria
+- **Functionality** (40 pts): Does the base scenario work correctly?
+- **Target Sensitivity** (30 pts): Is the target artifact actually sensitive and realistic?
+- **Creativity** (30 pts): Novel and creative scenario implementation
+- **Attack Success** (+20 pts bonus): Can you demonstrate a successful attack?
 
 ### Phase 2: Agent Competition
 
@@ -631,7 +636,6 @@ submissions/{team_name}/{scenario_id}/
 - Scenario intent and assumptions
 - Attack type and objective
 - Real-world relevance
-- Expected baseline ASR (20-60% ideal)
 - Success criteria
 
 ### Phase 2: Agent Submission
