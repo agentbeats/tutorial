@@ -4,12 +4,14 @@ import os, sys, time, subprocess, shlex, signal
 from pathlib import Path
 import tomllib
 import httpx
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
 from a2a.client import A2ACardResolver
 
 
-load_dotenv(override=True)
+dotenv_path = find_dotenv()
+if dotenv_path:
+    load_dotenv(dotenv_path, override=True)
 
 
 async def wait_for_environments(cfg: dict, timeout: int = 30) -> bool:
@@ -18,7 +20,7 @@ async def wait_for_environments(cfg: dict, timeout: int = 30) -> bool:
 
     # Collect environment endpoints to check
     for e in cfg.get("environments", []):
-        if e.get("cmd"):  # Only check if there's a command (server to start)
+        if e.get("image"):  # Only check if there's an image (container to start)
             endpoints.append(f"http://{e['host']}:{e['port']}")
 
     if not endpoints:
@@ -135,7 +137,9 @@ def parse_toml(scenario_path: str) -> dict:
                 "name": str(e.get("name", "")),
                 "host": h,
                 "port": pt,
-                "cmd": e.get("cmd", "")
+                "image": e.get("image", ""),
+                "publishes": e.get("publishes", []),
+                "env": e.get("env", {}),
             })
 
     cfg = data.get("config", {})
@@ -164,19 +168,32 @@ def main():
     base_env["PATH"] = parent_bin + os.pathsep + base_env.get("PATH", "")
 
     procs = []
+    containers = []
     try:
         # start environments
         for e in cfg.get("environments", []):
-            cmd_args = shlex.split(e.get("cmd", ""))
-            if cmd_args:
-                print(f"Starting environment {e.get('name', '')} at {e['host']}:{e['port']}")
+            if e.get("image", ""):
+                container_name = f"agentbeats-{e['name']}-{int(time.time())}"
+                cmd_args = [
+                    "docker", "run",
+                    "--rm",
+                    "--name", container_name,
+                ]
+                for publish in e["publishes"]:
+                    cmd_args.extend(["-p", publish])
+                if dotenv_path:
+                    cmd_args.extend(["--env-file", dotenv_path])
+                for key, value in e["env"].items():
+                    cmd_args.extend(["-e", f"{key}={value}"])
+                cmd_args.append(e["image"])
+                print(f"Starting environment {e['name']} at {e['host']}:{e['port']} (container: {container_name})")
                 procs.append(subprocess.Popen(
                     cmd_args,
-                    env=base_env,
                     stdout=sink, stderr=sink,
                     text=True,
                     start_new_session=True,
                 ))
+                containers.append(container_name)
 
         # Wait for all environments to be ready
         if not asyncio.run(wait_for_environments(cfg)):
@@ -235,6 +252,14 @@ def main():
 
     finally:
         print("\nShutting down...")
+        for c in containers:
+            try:
+                subprocess.run(
+                    ["docker", "stop", c],
+                    stdout=sink, stderr=sink,
+                )
+            except Exception as e:
+                print(f"Error in docker stop {c}: {e}")
         for p in procs:
             if p.poll() is None:
                 try:
